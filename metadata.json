@@ -1,0 +1,5 @@
+{
+  "name": "হিসাব রক্ষক (Hisab Rokkhok)",
+  "description": "A production-ready, scalable personal finance management app in Bangla, featuring multi-account support, wallets, loans, and advanced dashboard analytics powered by Supabase.",
+  "requestFramePermissions": []
+}
