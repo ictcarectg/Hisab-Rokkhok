@@ -36,57 +36,74 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="bg-white border-b sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center space-x-8">
-            <Link to="/" className="text-xl font-bold text-blue-600 flex items-center space-x-2">
-              <span className="text-2xl">🪙</span>
-              <span className="hidden sm:inline">হিসাব রক্ষক</span>
+    <>
+      {/* Desktop Navigation */}
+      <nav className="hidden md:block sticky top-0 z-50 glass border-b border-white/50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex justify-between h-20 items-center">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="bg-blue-600 text-white p-2 rounded-xl group-hover:scale-110 transition duration-300 shadow-lg shadow-blue-200">
+                <span className="text-xl">🪙</span>
+              </div>
+              <span className="text-2xl font-black text-slate-800 tracking-tight">হিসাব<span className="text-blue-600">রক্ষক</span></span>
             </Link>
             
-            <div className="hidden md:flex space-x-4">
+            <div className="flex bg-slate-100/50 p-1.5 rounded-2xl backdrop-blur-md">
               {navItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
                     location.pathname === item.path
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-slate-600 hover:text-blue-600'
+                      ? 'bg-white text-blue-600 shadow-sm scale-105'
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
                   }`}
                 >
                   {item.label}
                 </Link>
               ))}
             </div>
-          </div>
-          <div className="flex items-center">
-             <button 
-               onClick={logout}
-               className="text-xs font-bold text-slate-400 hover:text-rose-500 transition"
-             >
-               লগআউট
-             </button>
+
+            <button 
+              onClick={logout}
+              className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+            >
+              লগআউট ➔
+            </button>
           </div>
         </div>
-      </div>
+      </nav>
 
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-2 z-50 shadow-lg">
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`flex flex-col items-center p-2 rounded-lg ${
-              location.pathname === item.path ? 'text-blue-600' : 'text-slate-500'
-            }`}
-          >
-            <span className="text-xl">{item.icon}</span>
-            <span className="text-[10px] mt-1">{item.label}</span>
-          </Link>
-        ))}
-      </div>
-    </nav>
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-6 left-4 right-4 z-50">
+        <div className="glass bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-[2rem] p-2 flex justify-between items-center px-6">
+          {navItems.map((item) => {
+             const isActive = location.pathname === item.path;
+             return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center p-2 transition-all duration-300 relative ${
+                  isActive ? '-translate-y-2' : ''
+                }`}
+              >
+                <div className={`w-12 h-12 flex items-center justify-center rounded-2xl text-xl transition-all duration-300 ${
+                   isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-400'
+                }`}>
+                  {item.icon}
+                </div>
+                {isActive && <span className="absolute -bottom-4 text-[10px] font-bold text-blue-600 animate-in fade-in slide-in-from-bottom-1">{item.label}</span>}
+              </Link>
+            );
+          })}
+          <button onClick={logout} className="p-2 text-slate-300 hover:text-rose-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+            </svg>
+          </button>
+        </div>
+      </nav>
+    </>
   );
 };
 
@@ -96,22 +113,16 @@ const App: React.FC = () => {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        setupUserAccount(session.user);
-      } else {
-        setAuthLoading(false);
-      }
+      if (session?.user) setupUserAccount(session.user);
+      else setAuthLoading(false);
     });
 
-    // Handle auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        setupUserAccount(session.user);
-      } else {
+      if (session?.user) setupUserAccount(session.user);
+      else {
         setCurrentAccount(null);
         setAuthLoading(false);
       }
@@ -122,11 +133,7 @@ const App: React.FC = () => {
 
   const seedCategories = async (accountId: string, userId: string) => {
     try {
-      const { count } = await supabase
-        .from('categories')
-        .select('*', { count: 'exact', head: true })
-        .eq('account_id', accountId);
-
+      const { count } = await supabase.from('categories').select('*', { count: 'exact', head: true }).eq('account_id', accountId);
       if (count === 0) {
         const defaultCategories = [
           { name: 'বেতন', type: 'income', icon: '💰' },
@@ -146,83 +153,50 @@ const App: React.FC = () => {
           { name: 'শিক্ষা', type: 'expense', icon: '📚' },
           { name: 'বিনোদন', type: 'expense', icon: '🎉' }
         ];
-
-        const seedData = defaultCategories.map(cat => ({
-          ...cat,
-          account_id: accountId,
-          user_id: userId
-        }));
-
+        const seedData = defaultCategories.map(cat => ({ ...cat, account_id: accountId, user_id: userId }));
         await supabase.from('categories').insert(seedData);
       }
-    } catch (err) {
-      console.error("Error seeding categories:", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const setupUserAccount = async (user: any) => {
     try {
-      const { data: accounts, error } = await supabase
-        .from('accounts')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
+      const { data: accounts } = await supabase.from('accounts').select('*').eq('user_id', user.id);
       let activeAccount = null;
-
       if (!accounts || accounts.length === 0) {
-        const { data: newAccount, error: createError } = await supabase
-          .from('accounts')
-          .insert([{ user_id: user.id, name: 'আমার হিসাব' }])
-          .select()
-          .single();
-        
-        if (createError) throw createError;
+        const { data: newAccount } = await supabase.from('accounts').insert([{ user_id: user.id, name: 'আমার হিসাব' }]).select().single();
         activeAccount = newAccount;
       } else {
         activeAccount = accounts[0];
       }
-      
       setCurrentAccount(activeAccount);
-      
-      if (activeAccount) {
-        await seedCategories(activeAccount.id, user.id);
-      }
-
-    } catch (err) {
-      console.error("Account setup error:", err);
-    } finally {
-      setAuthLoading(false);
-    }
+      if (activeAccount) await seedCategories(activeAccount.id, user.id);
+    } catch (err) { console.error(err); } 
+    finally { setAuthLoading(false); }
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-  };
-
-  const refreshData = () => {
-    console.log("Refreshing data...");
-  };
+  const logout = async () => { await supabase.auth.signOut(); };
+  const refreshData = () => { console.log("Refreshing..."); };
 
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="relative">
+            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xl">🪙</div>
+        </div>
       </div>
     );
   }
 
-  if (!user) {
-    return <Login onLogin={(user) => setUser(user)} />;
-  }
+  if (!user) return <Login onLogin={(user) => setUser(user)} />;
 
   return (
     <AppContext.Provider value={{ currentAccount, user, refreshData, logout }}>
       <HashRouter>
-        <div className="min-h-screen bg-slate-50 pb-20 md:pb-0">
+        <div className="min-h-screen pb-32 md:pb-10">
           <Navigation />
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/transactions" element={<Transactions />} />
